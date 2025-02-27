@@ -36,7 +36,7 @@ global.media = {
  rulesBot : 'https://telegra.ph/file/7cd8985216ffd3c376238.jpg',
  thumbnail : 'https://d.uguu.se/YcVdeoJd.jpg',
  thumb : 'https://d.uguu.se/YcVdeoJd.jpg',
- logo : 'https://cdn.hisoka.net/51355cec238535562b1fe2f71e7cbcb2.jpeg',
+ logo : 'https://d.uguu.se/YcVdeoJd.jpg',
  unReg : 'https://telegra.ph/file/ef02d1fdd59082d05f08d.jpg',
  registrasi : 'https://cdn.hisoka.net/51355cec238535562b1fe2f71e7cbcb2.jpeg',
  confess : 'https://telegra.ph/file/bfef7e33bc60dd2608ac6.jpg',
