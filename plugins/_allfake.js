@@ -90,7 +90,7 @@ handler.all = async function (m) {
         forwardedNewsletterMessageInfo: {
           newsletterJid: "120363389247801158@newsletter",
           serverMessageId: 103,
-          newsletterName: ` SILANA LITE AI    |   هيا نحو النجاح 🧑‍🏫 `,
+          newsletterName: ` ذاك الامير     |  عالم فصلات `,
         },
         externalAdReply: {
           showAdAttribution: true,
