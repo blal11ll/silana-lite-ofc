@@ -8,7 +8,7 @@ const handler = async (m, { conn, text }) => {
   }
   delete conn.armag[m.chat];
   let res = await searchAlarabimag(text);
-  const instructions = "▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁📢 *رد على الرسالة برقم الرواية لتحميلها*\n▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁\nاالميزة من طرف Midsoune 👏 \ninstagram.com/noureddine_ouafy";
+  const instructions = "▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁📢 *رد على الرسالة برقم الرواية لتحميلها*\n▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁\nاالميزة من طرف ذاك الامير  👏 \https://www.instagram.com/lmm.l1?igsh=MXN2djAwb3Zwc2h5cQ==";
   const smCaps = '¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ¹⁰ ¹¹ ¹² ¹³ ¹⁴ ¹⁵ ¹⁶ ¹⁷ ¹⁸ ¹⁹ ²⁰';
   const smCapsArray = smCaps.split(' ');
 
