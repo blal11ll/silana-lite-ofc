@@ -88,7 +88,7 @@ handler.all = async function (m) {
         forwardingScore: 1,
         isForwarded: true,
         forwardedNewsletterMessageInfo: {
-          newsletterJid: "120363285847738492@newsletter",
+          newsletterJid: "120363389247801158@newsletter",
           serverMessageId: 103,
           newsletterName: ` SILANA LITE AI    |   هيا نحو النجاح 🧑‍🏫 `,
         },
