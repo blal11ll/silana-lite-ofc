@@ -98,7 +98,7 @@ handler.all = async function (m) {
           body: ucapan(),
           previewType: "VIDEO",
           thumbnailUrl: logo,
-          sourceUrl: "https://instagram.com/noureddine_ouafy",
+          sourceUrl: "https://www.instagram.com/lmm.l1",
         },
       },
     };
