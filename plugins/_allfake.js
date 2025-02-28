@@ -41,7 +41,7 @@ handler.all = async function (m) {
     global.kontak2 = [
       [
         owner[0],
-        await conn.getName(owner[0] + "212717457920@s.whatsapp.net"),
+        await conn.getName(owner[0] + "967781974099@s.whatsapp.net"),
         "SILANA AI",
         "https://whatsapp.com",
         true,
