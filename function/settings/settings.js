@@ -23,9 +23,9 @@ global.info = {
  packname : 'sticker by ',
  author : 'ذاك الامير',
  namebot : '乂 ذاك الامير',
- wm : 'SILANA LITE.',
+ wm : 'ذاك الامير.',
  stickpack : 'Whatsapp',
- stickauth : 'SILANA LITE',
+ stickauth : 'ذاك الامير',
  jid: '@s.whatsapp.net'
 }
 
