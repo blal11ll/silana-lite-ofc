@@ -1,30 +1,57 @@
-import {webp2mp4} from '../lib/webp2mp4.js';
-import {ffmpeg} from '../lib/converter.js';
+import fetch from "node-fetch"
 
-
-
-
-const handler = async (m, {conn, usedPrefix, command}) => {
-
-  if (!m.quoted) throw `*فين الاستيكر اللي عاوز تحولو ي حوب 🧞‍♂️*`;
-  const mime = m.quoted.mimetype || '';
-  if (!/webp/.test(mime)) throw `*دا مش استيكر ي حوب 🧞‍♂️*`;
-  const media = await m.quoted.download();
-  let out = Buffer.alloc(0);
-  if (/webp/.test(mime)) {
-    out = await webp2mp4(media);
-  } else if (/audio/.test(mime)) {
-    out = await ffmpeg(media, [
-      '-filter_complex', 'color',
-      '-pix_fmt', 'yuv420p',
-      '-crf', '51',
-      '-c:a', 'copy',
-      '-shortest',
-    ], 'mp3', 'mp4');
+let handler = async (m, {
+    command,
+    usedPrefix,
+    conn,
+    text,
+    args
+}) => {
+    let [tema, urutan, pesan] = text.split(/[^\w\s]/g)
+    if (!tema) return m.reply("مثال : \n .stickervideo car|1|bobiza the best bot\n")
+    if (!urutan) return m.reply("مثال : \n .stickervideo car|1|bobiza the best bot\n")
+    if (isNaN(urutan)) return m.reply("مثال : \n .stickervideo car|1|bobiza the best bot\n")
+    if (!pesan) return m.reply("مثال : \n .stickervideo car|1|bobiza the best bot\n")
+    await m.reply('> انتظر ...')
+    try {
+        let data = await getTemplateImageUrl(tema, urutan, pesan)
+        let regex = /^https:\/\/cdn\.memix\.com/;
+        if (regex.test(data.url)) {
+            await conn.sendMessage(m.chat, { sticker : { url: data.url }, thumbnail: await( await conn.getFile(data.url)).data, contextInfo:{  externalAdReply: { showAdAttribution: true,
+mediaType: 1,
+mediaUrl: null,
+title: data.name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+body: m.name,
+sourceUrl: null,
+thumbnail: await( await conn.getFile(data.url)).data
   }
-  await conn.sendFile(m.chat, out, 'error.mp4', '*شبيك لبيك طلبك بين ايديك 🧞*', m, 0, {thumbnail: out});
-};
-handler.help = ['tovideo'];
-handler.tags = ['sticker'];
-handler.command = ['tovideo', 'لفيديو'];
-export default handler;
+ }}, { quoted: m })
+        } else {
+            await m.reply("مثال : \n .stickervideo car|1|bobiza the best bot\n" + data)
+        }
+    } catch (e) {
+        await m.reply('error')
+    }
+}
+handler.help = ["stickervideo"]
+handler.tags = ["sticker"]
+handler.command = /^(stickervideo|svideo)$/i
+export default handler
+
+async function getTemplateImageUrl(input, number, text) {
+    try {
+        const data = await (await fetch("https://api.memix.com/v1/templates/search?q=" + input)).json();
+
+        if (number > data.templates.length) {
+            return data.templates.map((item, index) => `*${index + 1}.* ${item.id}`).join("\n");
+        } else {
+            const selectedId = data.templates[number - 1].id;
+            return { url: `https://cdn.memix.com/memix-${selectedId}.webp?text=${encodeURIComponent(text)}`,
+            name: selectedId
+            };
+        }
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        return "Error fetching data.";
+    }
+}
