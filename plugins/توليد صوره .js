@@ -1,26 +1,81 @@
-import fetch from 'node-fetch';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import fs from "fs";
+import path from "path";
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) throw `*الامر ده عشان تعمل صور بص كدا واتعلم*\n\n*مثال*\n*${usedPrefix + command} عربية مرسيدس مع عربية فيراري*`;
+const API_KEY = "AIzaSyDf81of74ju-Dm8PvkpwvkV9FmW88fjlxQ";
+
+let handler = async (m, { conn, args, text, usedPrefix, command }) => {
+  let q = m.quoted ? m.quoted : m;
+  let mime = (q.msg || q).mimetype || "";
+
+  if (!text) return m.reply("Please provide a text prompt.");
+  if (!mime) return m.reply(`Send/reply to an image with the caption *${usedPrefix + command}*`);
+  if (!/image\/(jpe?g|png)/.test(mime)) return m.reply(`Format ${mime} is not supported! Only jpeg/jpg/png`);
+
+  m.reply("Please wait...");
 
   try {
-    m.reply('*استنى يسطا هخلص الي في ايدي واعملهوله*');
+    let imgData = await q.download();
+    let genAI = new GoogleGenerativeAI(API_KEY);
 
-    const endpoint = `https://cute-tan-gorilla-yoke.cyclic.app/imagine?text=${encodeURIComponent(text)}`;
-    const response = await fetch(endpoint);
+    const base64Image = imgData.toString("base64");
 
-    if (response.ok) {
-      const imageBuffer = await response.buffer();
-      await conn.sendFile(m.chat, imageBuffer, 'image.png', null, m);
-    } else {
-      throw '*فشل إنشاء الصورة*';
+    const contents = [
+      { text },
+      {
+        inlineData: {
+          mimeType: mime,
+          data: base64Image
+        }
+      }
+    ];
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-exp-image-generation",
+      generationConfig: {
+        responseModalities: ["Text", "Image"]
+      },
+    });
+
+    const response = await model.generateContent(contents);
+
+    let resultImage;
+    let resultText = "";
+
+    for (const part of response.response.candidates[0].content.parts) {
+      if (part.text) {
+        resultText += part.text;
+      } else if (part.inlineData) {
+        const imageData = part.inlineData.data;
+        resultImage = Buffer.from(imageData, "base64");
+      }
     }
-  } catch {
-    throw '*حصل مشكلة يازميلي جرب الامر تاني*';
+
+    if (resultImage) {
+      const tempPath = path.join(process.cwd(), "tmp", `gemini_${Date.now()}.png`);
+      fs.writeFileSync(tempPath, resultImage);
+
+      await conn.sendMessage(m.chat, { 
+        image: { url: tempPath },
+        caption: `Image Transformation Result`
+      }, { quoted: m });
+
+      setTimeout(() => {
+        try {
+          fs.unlinkSync(tempPath);
+        } catch {}
+      }, 30000);
+    } else {
+      m.reply("Failed to process the image.");
+    }
+  } catch (error) {
+    console.error(error);
+    m.reply(`Error: ${error.message}`);
   }
 };
 
-handler.help = ['dalle'];
-handler.tags = ['drawing'];
-handler.command = ['توليد'];
+handler.help = ["توليد"];
+handler.tags = ["ai"];
+handler.command = ["gemini-img2img"];
+handler.limit = true
 export default handler;
