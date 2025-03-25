@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from "fs";
 import path from "path";
 
-const API_KEY = "AIzaSyDf81of74ju-Dm8PvkpwvkV9FmW88fjlxQ";
+const API_KEY = "AIzaSyCawac25yWAGQv8o3JyViTgswDFJD9YWo4";
 
 let handler = async (m, { conn, args, text, usedPrefix, command }) => {
   let q = m.quoted ? m.quoted : m;
