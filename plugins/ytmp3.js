@@ -1,58 +1,65 @@
 import fetch from 'node-fetch';
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-    let url = text.split(' ')[0];
-
-    if (!url) {
-        return conn.reply(m.chat, `Use the format: ${usedPrefix}${command} <url>`, m);
+let handler = async (m, { conn, text }) => {
+    if (!text) return m.reply("Enter The YouTube URL please");
+    await m.reply("_Wait....._");
+    try {
+        let z = await ytdl(text);
+        await conn.sendMessage(m.chat, { audio: { url: z.videoUrl }, mimetype: "audio/mpeg" }, { quoted: m });
+    } catch (e) {
+        console.log(e);
+        m.reply(`_Error Detected, Check this message Below_\n\n${e}`);
     }
+}
 
-    // Sending request status message
-    conn.reply(m.chat, 'Sending request...', m);
-
-    let res = await fetch(`https://ytdownloader.nvlgroup.my.id/info?url=${url}`);
-    if (!res.ok) return conn.reply(m.chat, 'Failed to fetch video information', m);
-
-    let info = await res.json();
-    let title = info.title;
-    let duration = info.duration || 'Unknown';
-
-    let downloadUrl = `https://ytdownloader.nvlgroup.my.id/audio?url=${url}&bitrate=128`;
-    let audioRes = await fetch(downloadUrl);
-    if (!audioRes.ok) return conn.reply(m.chat, 'Failed to download audio', m);
-
-    let audioBuffer = await audioRes.buffer();
-    let audioSize = audioBuffer.length / (1024 * 1024);
-
-    let message = `
-🎵 *Title:* ${title}
-🔗 *Link:* [Listen Here](${url})
-⏱️ *Duration:* ${duration} minutes
-📦 *File Size:* ${audioSize.toFixed(2)} MB
-`;
-
-    await conn.reply(m.chat, message, m);
-
-    // Success status message
-    conn.reply(m.chat, 'Request successfully sent', m);
-
-    if (audioSize > 100) {
-        await conn.sendMessage(m.chat, {
-            document: audioBuffer,
-            mimetype: 'audio/mpeg',
-            fileName: `${title}.mp3`
-        });
-    } else {
-        await conn.sendMessage(m.chat, {
-            audio: audioBuffer,
-            mimetype: "audio/mpeg",
-            ptt: true // Sends as a voice note
-        }, { quoted: m });
-    }
-};
-
-handler.help = ['ytmp3'];
-handler.command = ['ytmp3'];
+handler.help = handler.command = ['ytmp3'];
 handler.tags = ['downloader'];
+handler.limit = 8;
+handler.register = false;
 
 export default handler;
+
+async function ytdl(url) {
+    if (!url.match(/youtu\.be|youtube\.com/i)) return { error: 'Invalid YouTube URL' };
+
+    try {
+        const headers = {
+            "accept": "*/*",
+            "accept-language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+            "sec-ch-ua": "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\"",
+            "sec-ch-ua-mobile": "?1",
+            "sec-ch-ua-platform": "\"Android\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "Referer": "https://id.ytmp3.mobi/",
+            "Referrer-Policy": "strict-origin-when-cross-origin"
+        };
+
+        const initial = await fetch(`https://d.ymcdn.org/api/v1/init?p=y&23=1llum1n471&_=${Math.random()}`, { headers });
+        const init = await initial.json();
+
+        const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*embed\/))([^&?/]+)/)?.[1];
+        if (!id) throw new Error('Failed to get video ID');
+
+        const convertURL = init.convertURL + `&v=${id}&f=mp4&_=${Math.random()}`;
+        const converts = await fetch(convertURL, { headers });
+        const convert = await converts.json();
+
+        let info = {};
+        for (let i = 0; i < 5; i++) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            const progressRes = await fetch(convert.progressURL, { headers });
+            info = await progressRes.json();
+            if (info.progress === 3) break;
+        }
+
+        if (!info.title || !convert.downloadURL) throw new Error('Conversion failed');
+
+        return { videoUrl: convert.downloadURL, title: info.title };
+
+    } catch (error) {
+        console.error(error);
+        return { error: error.message };
+    }
+}
