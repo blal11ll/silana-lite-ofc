@@ -1,370 +1,511 @@
-import moment from 'moment-timezone'
-import PhoneNumber from 'awesome-phonenumber'
-import fs from 'fs'
-import fetch from 'node-fetch'
 
-let handler = async (m, { conn, usedPrefix, command, args }) => {
-  const cmd = args[0] || 'list';
-  let type = (args[0] || '').toLowerCase()
-  let _menu = global.db.data.settings[conn.user.jid]
-    let d = new Date(new Date + 3600000)
-    let locale = 'id'
-    let week = d.toLocaleDateString(locale, { weekday: 'long' })
-    let date = d.toLocaleDateString(locale, {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    })
-  const tagCount = {};
-  const tagHelpMapping = {};
-  Object.keys(global.plugins)
-    .filter(plugin => !plugin.disabled)
-    .forEach(plugin => {
-      const tagsArray = Array.isArray(global.plugins[plugin].tags)
-        ? global.plugins[plugin].tags
-        : [];
+import { EventEmitter } from 'events';
 
-      if (tagsArray.length > 0) {
-        const helpArray = Array.isArray(global.plugins[plugin].help)
-          ? global.plugins[plugin].help
-          : [global.plugins[plugin].help];
-
-        tagsArray.forEach(tag => {
-          if (tag) {
-            if (tagCount[tag]) {
-              tagCount[tag]++;
-              tagHelpMapping[tag].push(...helpArray);
-            } else {
-              tagCount[tag] = 1;
-              tagHelpMapping[tag] = [...helpArray];
-            }
-          }
-        });
-      }
-    });
-           let isiMenu = []
-          let objekk = Object.keys(tagCount)
-          Object.entries(tagCount).map(([key, value]) => isiMenu.push({
-          header: ` list cmd ${key}  `,
-                    title: `📌 إظهار قائمة أوامر [ ${key} ]`,
-                    description: `عدد ${value} الميزات`,
-                    id: ".menu " + key,
-                    })
-          ).join();
-          const datas = {
-    title: "أنقر هنا !",
-    sections: [{
-            title: "جميع الأوامر الخاصة بالبوت",
-            highlight_label: "إظهار كافة الميزات",
-            rows: [{
-                    header: " All Menu",
-                    title: "جميع الأوامر الخاصة بالبوت",
-                    description: "",
-                    id: ".menu all",
-                }],
-        },
-        {
-            title: 'لائحة الأوامر ',
-            highlight_label: "الائحة",
-            rows: [...isiMenu]
-        },
-        {
-            title: 'معلومات عن البوت',
-            highlight_label: "معلومة",
-            rows: [
-            {
-                    header: "سكريبت البوت",
-                    title: "معلومات حول سكريبت البوت",
-                    description: "",
-                    id: ".sc",
-                },
-            {
-                    header: "Info Owner",
-                    title: "معلومات عن صاحب البوت",
-                    description: "",
-                    id: ".owner",
-                },
-            {
-                    header: "معلومات الميزة الإجمالية",
-                    title: "المعلومات المتعلقة بالميزات الإجمالية للبوت",
-                    description: "",
-                    id: ".totalfitur",
-                },
-            {
-                    header: "معلومات سرعة الاستجابة",
-                    title: "معلومات بخصوص سرعة استجابة الروبوت",
-                    description: "",
-                    id: ".os",
-                }
-                ]
-        }
-    ]
+EventEmitter.setMaxListeners(0);
+import './config.js'
+import './function/settings/settings.js'
+import path, {
+    join
+} from 'path'
+import {
+    platform
+} from 'process'
+import chalk from 'chalk'
+import {
+    fileURLToPath,
+    pathToFileURL
+} from 'url'
+import {
+    createRequire
+} from 'module'
+global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') {
+    return rmPrefix ? /file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString()
 };
+global.__dirname = function dirname(pathURL) {
+    return path.dirname(global.__filename(pathURL, true))
+};
+global.__require = function require(dir = import.meta.url) {
+    return createRequire(dir)
+}
+import * as ws from 'ws'
+import {
+    readdirSync,
+    statSync,
+    unlinkSync,
+    existsSync,
+    readFileSync,
+    watch
+} from 'fs'
+import yargs from 'yargs'
+import {
+    spawn
+} from 'child_process'
+import lodash from 'lodash'
+import syntaxerror from 'syntax-error'
+import {
+    tmpdir
+} from 'os'
+import os from 'os'
+import Pino from 'pino';
+import {
+    format
+} from 'util'
+import {
+    makeWASocket,
+    protoType,
+    serialize
+} from './lib/simple.js';
+import {
+    Low
+} from 'lowdb';
+import fs from 'fs';
+import {
+    JSONFile
+} from "lowdb/node"
+import storeSys from './lib/store2.js'
+const store = storeSys.makeInMemoryStore()
+const {
+    DisconnectReason,
+    useMultiFileAuthState,
+    MessageRetryMap,
+    fetchLatestBaileysVersion,
+    makeCacheableSignalKeyStore,
+    makeInMemoryStore,
+    proto,
+    jidNormalizedUser,
+    PHONENUMBER_MCC,
+    Browsers
+} = await (await import('@adiwajshing/baileys')).default;
 
-  let objek = Object.values(db.data.stats).map(v => v.success)
-  let totalHit = 0
-   for (let b of objek) {
-    totalHit += b
-    }
-  let docUrl = 'https://telegra.ph/file/e601537d315cbc69b856b.jpg'
-  let help = Object.values(global.plugins).filter(plugin => !plugin.disabled).map(plugin => {
-    return {
-      help: Array.isArray(plugin.tags) ? plugin.help : [plugin.help],
-      tags: Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags],
-      prefix: 'customPrefix' in plugin,
-      limit: plugin.limit,
-      premium: plugin.premium,
-      enabled: !plugin.disabled,
-    }
-  });
-    
-   let data = db.data.users[m.sender];
-   let fitur = Object.values(plugins).filter(v => v.help).map(v => v.help).flat(1);
-   let tUser = Object.keys(db.data.users).length;
-   let userReg = Object.values(global.db.data.users).filter(user => user.registered == true).length
-   
-let headers = `إعتبرني : رفيقتك ، أستاذتك ،عزيزتك ،التي ستجدها قربك في كل يوم لأجعل لك من نجمة ستة و من استخدام تطبيق الواتساب طعما آخر 🙂‍↕️🧠🗣️\n\n`
+global.func = (await import('./function/system/function.js'))
 
-  if (cmd === 'list') {
-    const daftarTag = Object.keys(tagCount)
-      .sort()
-      .join('\n│※ ' + usedPrefix + command + '  ');
-    const more = String.fromCharCode(8206)
-    const readMore = more.repeat(4001)
-    let _mpt
-    if (process.send) {
-      process.send('uptime')
-      _mpt = await new Promise(resolve => {
-        process.once('message', resolve)
-        setTimeout(resolve, 1000)
-      }) * 1000
-    }
-    let mpt = clockString(_mpt)
-    let name = m.pushName || conn.getName(m.sender)
-    let list = `${headers}${readMore}\n╭──「 LIST MENU 」\n│※ ${usedPrefix + command} all\n│※ ${daftarTag}\n╰──────────•`
- const pp = await conn.profilePictureUrl(m.sender, 'image').catch((_) => "https://telegra.ph/file/1ecdb5a0aee62ef17d7fc.jpg");
-if (_menu.image) {
+import { fetchJson } from './lib/myfunc.js'
+import Spinnies from 'spinnies'
+const spinnies = new Spinnies();
+import axios from 'axios';
+import readline from "readline"
+import {
+    parsePhoneNumber
+} from "libphonenumber-js"
 
-conn.sendMessage(m.chat, {
-      text: list,
-      contextInfo: {
-      externalAdReply: {
-      title: namebot,
-      body: 'M E N U',
-      thumbnailUrl: thumbnail,
-      souceUrl: sgc,
-      mediaType: 1,
-      renderLargerThumbnail: true
-      }}}, {quoted: m})
-      
-      } else if (_menu.gif) {
+const {
+    CONNECTING
+} = ws
+const {
+    chain
+} = lodash
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+})
+const question = (text) => new Promise((resolve) => rl.question(text, resolve))
+import NodeCache from "node-cache"
+const msgRetryCounterCache = new NodeCache()
+const msgRetryCounterMap = (MessageRetryMap) => {};
+const {
+    version
+} = await fetchLatestBaileysVersion();
+                
+protoType()
+serialize()
 
-conn.sendMessage(m.chat, {
-      video: {url: "https://telegra.ph/file/ca2d038b71ff86e2c70d3.mp4"},
-      gifPlayback: true,
-      caption: list,
-      jpegThumbnail: await conn.resize((await conn.getFile(docUrl)).data, 180, 72),
-      contextInfo: {
-      externalAdReply: {
-      title: namebot,
-      body: 'M E N U',
-      thumbnailUrl: thumbnail,
-      souceUrl: sgc,
-      mediaType: 1,
-      renderLargerThumbnail: true
-      }}}, {quoted: m})
-
-} else if (_menu.teks) {
-
-conn.reply(m.chat, list, m)
-
-} else if (_menu.doc) {
-
-conn.sendMessage(m.chat, {
-            document: fs.readFileSync("./package.json"),
-            fileName: namebot,
-            fileLength: new Date(),
-            pageCount: "2024",
-            caption: list,
-            jpegThumbnail: await conn.resize((await conn.getFile(docUrl)).data, 180, 72),
-            contextInfo: {
-              externalAdReply: {
-                containsAutoReply: true,
-                mediaType: 1,
-                mediaUrl: 'https://telegra.ph/file/74abb87ac6082571db546.jpg',
-                renderLargerThumbnail: true,
-                showAdAttribution: true,
-                sourceUrl: sgc,
-                thumbnailUrl: thumbnail,
-                title: `${date}`,
-                body: '',
-              },
-            },
-          }, {quoted: m});
-          } else if (_menu.button) {
-          
- conn.sendListImageButton(m.chat, `${headers}`, datas, 'عَنْ أَبِي هُرَيْرَةَ رضي الله تعالى عنه: أَنَّ رَسُولَ اللَّهِ ﷺ قَالَ: إِذَا مَاتَ ابنُ آدم انْقَطَعَ عَنْهُ عَمَلُهُ إِلَّا مِنْ ثَلَاثٍ: صَدَقَةٍ جَارِيَةٍ، أو عِلْمٍ يُنْتَفَعُ بِهِ، أَوْ وَلَدٍ صَالِحٍ يَدْعُو لَهُ', thumbnail)
-          }
-  } else if (tagCount[cmd]) {
-    const daftarHelp = tagHelpMapping[cmd].map((helpItem, index) => {
-        
-      const premiumSign = help[index].premium ? '🅟' : '';
-      const limitSign = help[index].limit ? 'Ⓛ' : '';
-      return `.${helpItem} ${premiumSign}${limitSign}`;
-    }).join('\n│※'  + ' ');
-        const more = String.fromCharCode(8206)
-        const readMore = more.repeat(4001)
-        
-    const list2 =  `${headers}${readMore}╭──「 MENU ${cmd.toUpperCase()} 」\n├──────────────\n│※ ${daftarHelp}\n╰──────────•\n\n*Total menu ${cmd}: ${tagHelpMapping[cmd].length}*`
-     const pp = await conn.profilePictureUrl(m.sender, 'image').catch((_) => "https://telegra.ph/file/1ecdb5a0aee62ef17d7fc.jpg");
-if (_menu.image) {
-
-conn.sendMessage(m.chat, {
-      
-      text: list2,
-      contextInfo: {
-      externalAdReply: {
-      title: namebot,
-      body: 'M E N U',
-      thumbnailUrl: thumbnail,
-      souceUrl: sgc,
-      mediaType: 1,
-      renderLargerThumbnail: true
-      }}}, {quoted: m})
-      
-      } else if (_menu.gif) {
-
-conn.sendMessage(m.chat, {
-      video: {url: "https://telegra.ph/file/ca2d038b71ff86e2c70d3.mp4"},
-      gifPlayback: true,
-      caption: list2,
-      contextInfo: {
-      externalAdReply: {
-      title: namebot,
-      body: 'M E N U',
-      thumbnailUrl: thumbnail,
-      souceUrl: sgc,
-      mediaType: 1,
-      renderLargerThumbnail: true
-      }}}, {quoted: m})
-
-} else if (_menu.teks) {
-
-conn.reply(m.chat, list2, m)
-
-} else if (_menu.doc) {
-
-conn.sendMessage(m.chat, {
-            document: fs.readFileSync("./package.json"),
-            fileName: namebot,
-            fileLength: new Date(),
-            pageCount: "2024",
-            jpegThumbnail: await conn.resize((await conn.getFile(docUrl)).data, 180, 72),
-            caption: list2,
-            contextInfo: {
-              externalAdReply: {
-                containsAutoReply: true,
-                mediaType: 1,
-                mediaUrl: 'https://telegra.ph/file/74abb87ac6082571db546.jpg',
-                renderLargerThumbnail: true,
-                showAdAttribution: true,
-                sourceUrl: sgc,
-                thumbnailUrl: thumbnail,
-                title: `${date}`,
-                body: '',
-              },
-            },
-          }, {quoted: m});
-          } else if (_menu.button) {
-          conn.sendListImageButton(m.chat, `IM SILANA LITE AI\n\n${list2}`, datas, wm, thumbnail)
-          }
-          } else if (cmd === 'all') {
-    let name = m.pushName || conn.getName(m.sender)
-    const more = String.fromCharCode(8206)
-    const readMore = more.repeat(4001)
-    const allTagsAndHelp = Object.keys(tagCount).map(tag => {
-      const daftarHelp = tagHelpMapping[tag].map((helpItem, index) => {
-        const premiumSign = help[index].premium ? '🅟' : '';
-        const limitSign = help[index].limit ? 'Ⓛ' : '';
-        return `.${helpItem} ${premiumSign}${limitSign}`;
-      }).join('\n│※' + ' ');
-      return`╭──「 MENU ${tag.toUpperCase()} 」\n├──────────────\n│※ ${daftarHelp}\n╰──────────•`;
-    }).join('\n');
-    let all =  `${headers}${readMore}\n${allTagsAndHelp}\n${wm}`
-    const pp = await conn.profilePictureUrl(m.sender, 'image').catch((_) => "https://telegra.ph/file/1ecdb5a0aee62ef17d7fc.jpg");
-    if (_menu.image) {
-
-conn.sendMessage(m.chat, {
-      text: all,
-      contextInfo: {
-      externalAdReply: {
-      title: namebot,
-      body: 'M E N U',
-      thumbnailUrl: thumbnail,
-      souceUrl: sgc,
-      mediaType: 1,
-      renderLargerThumbnail: true
-      }}}, {quoted: m})
-      
-      } else if (_menu.gif) {
-
-conn.sendMessage(m.chat, {
-      video: {url: "https://telegra.ph/file/ca2d038b71ff86e2c70d3.mp4"},
-      gifPlayback: true,
-      caption: all,
-      contextInfo: {
-      externalAdReply: {
-      title: namebot,
-      body: 'M E N U',
-      thumbnailUrl: thumbnail,
-      souceUrl: sgc,
-      mediaType: 1,
-      renderLargerThumbnail: true
-      }}}, {quoted: m})
-
-} else if (_menu.teks) {
-
-conn.reply(m.chat, all, m)
-
-} else if (_menu.doc) {
-
-conn.sendMessage(m.chat, {
-            document: fs.readFileSync("./package.json"),
-            fileName: namebot,
-            fileLength: new Date(),
-            pageCount: "2024",
-            caption: all,
-            jpegThumbnail: await conn.resize((await conn.getFile(docUrl)).data, 180, 72),
-            contextInfo: {
-              externalAdReply: {
-                containsAutoReply: true,
-                mediaType: 1,
-                mediaUrl: 'https://telegra.ph/file/74abb87ac6082571db546.jpg',
-                renderLargerThumbnail: true,
-                showAdAttribution: true,
-                sourceUrl: sgc,
-                thumbnailUrl: thumbnail,
-                title: `${date}`,
-                body: '',
-              },
-            },
-          }, {quoted: m});
-          } else if (_menu.button) {
-          conn.sendListImageButton(m.chat, `IM SILANA LITE AI\n${all}`, datas, 'instagram.com/noureddine_ouafy', thumbnail)
-          }
-  } else {
-  await conn.reply(m.chat, `"'${cmd}' could not be found. Use commands '${command} list' atau '${command} all' to see the available menu.`,m);
-  }
+global.API = (name, path = '/', query = {}, apikeyqueryname) => (name in global.APIs ? global.APIs[name] : name) + path + (query || apikeyqueryname ? '?' + new URLSearchParams(Object.entries({
+    ...query,
+    ...(apikeyqueryname ? {
+        [apikeyqueryname]: global.APIKeys[name in global.APIs ? global.APIs[name] : name]
+    } : {})
+})) : '')
+// global.Fn = function functionCallBack(fn, ...args) { return fn.call(global.conn, ...args) }
+global.timestamp = {
+    start: new Date
 }
 
-handler.help = ['menu']
-handler.command = ['menu']
-handler.register = true
-export default handler
+const __dirname = global.__dirname(import.meta.url)
 
-function clockString(ms) {
-  let h = isNaN(ms) ? '--' : Math.floor(ms / 3600000)
-  let m = isNaN(ms) ? '--' : Math.floor(ms / 60000) % 60
-  let s = isNaN(ms) ? '--' : Math.floor(ms / 1000) % 60
-  return [h, m, s].map(v => v.toString().padStart(2, 0)).join(':')
+global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
+global.prefix = new RegExp('^[' + (opts['prefix'] || '‎!./#\\').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']');
+
+global.db = new Low(/https?:\/\//.test(opts['db'] || '') ? new cloudDBAdapter(opts['db']) : new JSONFile(`${opts._[0] ? opts._[0] + '_' : ''}database.json`))
+
+global.DATABASE = global.db // Backwards Compatibility
+global.loadDatabase = async function loadDatabase() {
+    if (global.db.READ) return new Promise((resolve) => setInterval(async function() {
+        if (!global.db.READ) {
+            clearInterval(this)
+            resolve(global.db.data == null ? await global.loadDatabase() : global.db.data)
+        }
+    }, 1 * 1000))
+    if (global.db.data !== null) return
+    global.db.READ = true
+    await global.db.read().catch(console.error)
+    global.db.READ = null
+    global.db.data = {
+        users: {},
+        chats: {},
+        stats: {},
+        msgs: {},
+        sticker: {},
+        settings: {},
+        menfess: {},
+        simulator: {},
+        ...(global.db.data || {})
+    }
+    global.db.chain = chain(global.db.data)
 }
+loadDatabase()
+
+global.authFolder = storeSys.fixFileName(`${opts._[0] || ''}sessions`)
+let {
+    state,
+    saveCreds
+} = await useMultiFileAuthState(path.resolve('./sessions'))
+
+const connectionOptions = {
+    pairingCode: true,
+    patchMessageBeforeSending: (message) => {
+        const requiresPatch = !!(message.interactiveResponse || message.buttonsMessage || message.templateMessage || message.listMessage);
+        if (requiresPatch) {
+            message = {
+                viewOnceMessage: {
+                    message: {
+                        messageContextInfo: {
+                            deviceListMetadataVersion: 2,
+                            deviceListMetadata: {}
+                        },
+                        ...message
+                    }
+                }
+            };
+        }
+        return message;
+    },
+    msgRetryCounterMap,
+    logger: Pino({
+        level: 'fatal'
+    }),
+    auth: state,
+    browser: ['Linux', 'Chrome', ''],
+    version,
+    getMessage: async (key) => {
+        let jid = jidNormalizedUser(key.remoteJid)
+        let msg = await store.loadMessage(jid, key.id)
+        return msg?.message || ""
+    },
+    msgRetryCounterCache,
+    connectTimeoutMs: 60000,
+    defaultQueryTimeoutMs: 0,
+    keepAliveIntervalMs: 10000,
+    emitOwnEvents: true,
+    fireInitQueries: true,
+    generateHighQualityLinkPreview: true,
+    syncFullHistory: true,
+    markOnlineOnConnect: true
+}
+
+global.conn = makeWASocket(connectionOptions)
+conn.isInit = false
+
+if (!conn.authState.creds.registered) {
+
+    let phoneNumber
+    if (!conn.authState.creds.registered) {
+
+  if (process.argv[2]) { // Changed process.argv[1] to process.argv[2]
+            phoneNumber = process.argv[2];
+        } else if (!!global.pairingNumber) {
+            phoneNumber = global.pairingNumber.replace(/[^0-9]/g, '');
+            if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
+                console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example: 62xxx")));
+                process.exit(0);
+            }
+        } else if (!global.pairingNumber) {
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)));
+            phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
+            
+            // Ask again when entering the wrong number
+            if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
+                console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example: 212xxx")));
+                phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number : `)));
+                phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
+                rl.close();
+            }
+        }
+        spinnies.add('spinner-1', { text: `Pairing Number: ${phoneNumber}`, color: "blue"});
+        setTimeout(async () => {
+            let code = await conn.requestPairingCode(phoneNumber);
+            code = code?.match(/.{1,4}/g)?.join("-") || code;
+            spinnies.succeed('spinner-1', { text: `Your Pairing Code: ${code}`, successColor: "white"});
+        }, 3000);
+    }
+}
+
+if (!opts['test']) {
+    if (global.db) {
+        setInterval(async () => {
+            if (global.db.data) await global.db.write().catch(console.error)
+            
+        }, 2000);
+    }
+}
+
+async function connectionUpdate(update) {
+    const {
+        connection,
+        lastDisconnect,
+        isNewLogin
+    } = update
+    global.stopped = connection;
+
+    if (isNewLogin) conn.isInit = true
+    const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode
+    if (code && code !== DisconnectReason.loggedOut && conn?.ws.readyState !== ws.default.CONNECTING) {
+        console.log(await global.reloadHandler(true).catch(console.error))
+        global.timestamp.connect = new Date
+    }
+    if (global.db.data == null) loadDatabase()
+    if (connection === "open") {
+        const deviceName = os.hostname();
+        const message = `• *معلومات*: البوت نشط\n
+◦ *المنصة*: ${os.platform()} ${os.release()}
+◦ *جهاز*: ${deviceName}
+◦ *اسم البوت*: ${global.namebot}
+◦ *الوقت المتصل*: ${new Date().toLocaleString()}\n\n قناتي على الواتساب للمزيد من المعلومات \nhttps://whatsapp.com/channel/0029VaX4b6J7DAWqt3Hhu01A`;
+        
+        this.sendMessage(global.nomerown + `@s.whatsapp.net`, {
+            text: message
+        });
+        console.log(chalk.bgGreen(chalk.white('The bot is already active')));
+    }
+    if (connection == 'close') {
+        console.log(chalk.yellow(`📡 Connection is lost from the server, delete sessions and retake immediately ⚠️`));
+    }
+}
+
+process.on('uncaughtException', console.error)
+
+let isInit = true;
+let handler = await import('./handler.js');
+global.reloadHandler = async function(restatConn) {
+    try {
+        const Handler = await import(`./handler.js?update=${Date.now()}`).catch(console.error);
+        if (Object.keys(Handler || {}).length) handler = Handler;
+    } catch (error) {
+        console.error;
+    }
+    if (restatConn) {
+        const oldChats = global.conn.chats;
+        try {
+            global.conn.ws.close();
+        } catch {}
+        conn.ev.removeAllListeners();
+        global.conn = makeWASocket(connectionOptions, {
+            chats: oldChats
+        });
+        isInit = true;
+    }
+    if (!isInit) {
+        conn.ev.off('messages.upsert', conn.handler)
+        conn.ev.off('group-participants.update', conn.participantsUpdate)
+        conn.ev.off('message.update', conn.pollUpdate);
+        conn.ev.off('groups.update', conn.groupsUpdate)
+        conn.ev.off('message.delete', conn.onDelete)
+        conn.ev.off('connection.update', conn.connectionUpdate)
+        conn.ev.off('creds.update', conn.credsUpdate)
+    }
+    conn.welcome = 'مرحـــــــــبا بـــــــــك يا عـــــــــزيز(ت)ي ،انا ســـــــــعيدة بٱنضـــــــــمامك لهذه المجمـــــــــوعة رجاء إقرأ وصـــــــــف المجمـــــــــوعة لان فيها قـــــــــوانين استعمـــــــــال الـــــــــبوت ، صانعي نـــــــــورالدين يكره 🥺من لا يحترم القوانين و عندما ينزعج يبدأ في الطرد، لا تقلق 🤣🤣 ، مرة اخرى مرحبا \n\n @subject, @user\n'
+    conn.bye = '*الـــــــــباب أ الحـــــــــباب*\n  مع السلامة  اتمنى ألا تعود الى هـــــــــنا \n@user 👋'
+    conn.spromote = '@user *يرقي* إلى المشرف '
+    conn.sdemote = '@user *خفض الرتبة* من المشرف'
+    conn.sDesc = 'تم تغيير الوصف إلى \n@desc'
+    conn.sSubject = 'تم تغيير اسم المجموعة إلى \n@subject'
+    conn.sIcon = 'تم تغيير الصورة الجماعية!'
+    conn.sRevoke = 'تم تغيير رابط المجموعة إلى \n@revoke'
+    conn.sAnnounceOn = 'تم إغلاق المجموعة!\الآن يمكن للمسؤولين فقط إرسال الرسائل.'
+    conn.sAnnounceOff = 'المجموعة مفتوحة!\nالآن يمكن لجميع المشاركين إرسال الرسائل.'
+    conn.sRestrictOn = 'تم تغيير تعديل معلومات المجموعة إلى المسؤول فقط!'
+    conn.sRestrictOff = 'تم تغيير تعديل معلومات المجموعة لجميع المشاركين!'
+
+    conn.handler = handler.handler.bind(global.conn)
+    conn.participantsUpdate = handler.participantsUpdate.bind(global.conn)
+    conn.groupsUpdate = handler.groupsUpdate.bind(global.conn)
+    conn.pollUpdate = handler.pollUpdate.bind(global.conn);
+    conn.onDelete = handler.deleteUpdate.bind(global.conn)
+    conn.connectionUpdate = connectionUpdate.bind(global.conn)
+    conn.credsUpdate = saveCreds.bind(global.conn)
+
+    const currentDateTime = new Date();
+    const messageDateTime = new Date(conn.ev);
+    if (currentDateTime >= messageDateTime) {
+        const chats = Object.entries(conn.chats).filter(([jid, chat]) => !jid.endsWith('@g.us') && chat.isChats).map((v) => v[0]);
+    } else {
+        const chats = Object.entries(conn.chats).filter(([jid, chat]) => !jid.endsWith('@g.us') && chat.isChats).map((v) => v[0]);
+    }
+
+    conn.ev.on('messages.upsert', conn.handler)
+    conn.ev.on('group-participants.update', conn.participantsUpdate)
+    conn.ev.on('messages.update', conn.pollUpdate);
+    conn.ev.on('groups.update', conn.groupsUpdate)
+    conn.ev.on('message.delete', conn.onDelete)
+    conn.ev.on('connection.update', conn.connectionUpdate)
+    conn.ev.on('creds.update', conn.credsUpdate)
+    isInit = false
+    return true
+}
+
+const pluginFolder = global.__dirname(join(__dirname, './plugins/index'));
+const pluginFilter = (filename) => /\.js$/.test(filename);
+global.plugins = {};
+async function filesInit() {
+    for (const filename of readdirSync(pluginFolder).filter(pluginFilter)) {
+        try {
+            const file = global.__filename(join(pluginFolder, filename));
+            const module = await import(file);
+            global.plugins[filename] = module.default || module;
+        } catch (e) {
+            conn.logger.error(e);
+            delete global.plugins[filename];
+        }
+    }
+}
+filesInit().then((_) => Object.keys(global.plugins)).catch(console.error);
+
+global.reload = async (_ev, filename) => {
+    if (pluginFilter(filename)) {
+        const dir = global.__filename(join(pluginFolder, filename), true);
+        if (filename in global.plugins) {
+            if (existsSync(dir)) conn.logger.info(` Updated Plugin - '${filename}'`);
+            else {
+                conn.logger.warn(`Deleted Plugin - '${filename}'`);
+                return delete global.plugins[filename];
+            }
+        } else conn.logger.info(`New Plugin - '${filename}'`);
+        const err = syntaxerror(readFileSync(dir), filename, {
+            sourceType: 'module',
+            allowAwaitOutsideFunction: true,
+        });
+        if (err) conn.logger.error(`syntax error while loading '${filename}'\n${format(err)}`);
+        else {
+            try {
+                const module = (await import(`${global.__filename(dir)}?update=${Date.now()}`));
+                global.plugins[filename] = module.default || module;
+            } catch (e) {
+                conn.logger.error(`error require plugin '${filename}\n${format(e)}'`);
+            } finally {
+                global.plugins = Object.fromEntries(Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b)));
+            }
+        }
+    }
+};
+Object.freeze(global.reload);
+watch(pluginFolder, global.reload);
+await global.reloadHandler();
+
+/* QuickTest */
+async function _quickTest() {
+    const test = await Promise.all([
+        spawn('ffmpeg'),
+        spawn('ffprobe'),
+        spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-filter_complex', 'color', '-frames:v', '1', '-f', 'webp', '-']),
+        spawn('convert'),
+        spawn('magick'),
+        spawn('gm'),
+        spawn('find', ['--version']),
+    ].map((p) => {
+        return Promise.race([
+            new Promise((resolve) => {
+                p.on('close', (code) => {
+                    resolve(code !== 127);
+                });
+            }),
+            new Promise((resolve) => {
+                p.on('error', (_) => resolve(false));
+            })
+        ]);
+    }));
+    const [ffmpeg, ffprobe, ffmpegWebp, convert, magick, gm, find] = test;
+    const s = global.support = {
+        ffmpeg,
+        ffprobe,
+        ffmpegWebp,
+        convert,
+        magick,
+        gm,
+        find
+    };
+    Object.freeze(global.support);
+}
+
+const directory = './sessions';
+function clearSesi(directory, fileNameToKeep) {
+    fs.readdir(directory, (err, files) => {
+        if (err) {
+            console.error('There is an error:', err);
+            return;
+        }
+
+        files.forEach((file) => {
+            const filePath = path.join(directory, file);
+            if (file !== fileNameToKeep) {
+                fs.unlink(filePath, (err) => {
+                    if (err) {
+                        console.error(`Failed to delete file ${file}:`, err);
+                    } else {
+                        console.log(`File ${file} deleted successfully.`);
+                    }
+                });
+            }
+        });
+    });
+}
+
+function clearTmp() {
+    const tmp = [tmpdir(), join(__dirname, './tmp')];
+    const filename = [];
+    tmp.forEach((dirname) => readdirSync(dirname).forEach((file) => filename.push(join(dirname, file))));
+    return filename.map((file) => {
+        const stats = statSync(file);
+        if (stats.isFile() && (Date.now() - stats.mtimeMs >= 5 * 60 * 1000)) return unlinkSync(file);
+        return false;
+    });
+}
+
+setInterval(async () => {
+    if (stopped === 'close' || !conn || !conn.user) return;
+    if (setting.clearSesi === true) {
+    
+    await clearSesi(directory, 'creds.json');
+    
+    conn.reply(info.nomerown + '@s.whatsapp.net', 'Sessions has been cleared', null) >
+        console.log(chalk.cyanBright(
+            `\n╭───────────────────·»\n│\n` +
+            `│  Sessions clear Successfull \n│\n` +
+            `╰───❲ ${global.namebot} ❳\n`
+        ));
+        }
+}, 60 * 120 * 1000); // every 4 hours 
+
+setInterval(async () => {
+    if (stopped === 'close' || !conn || !conn.user) return;
+    if (setting.clearTmp === true) {
+    await clearTmp();
+    conn.reply(info.nomerown + '@s.whatsapp.net', 'Tmp has been cleaned', null) >
+        console.log(chalk.cyanBright(
+            `\n╭───────────────────·»\n│\n` +
+            `│  Tmp clear Successfull \n│\n` +
+            `╰───❲ ${global.namebot} ❳\n`
+        ));
+        }
+}, 120 * 60 * 1000); //every 2 hours 
+
+setInterval(async () => {
+    await func.closegc()
+}, 25000) // check every 25 seconds
+
+
+_quickTest().catch(console.error);
+
+/**
+@schedule reset limit
+**/
+
+(await import('./function/system/schedule.js')).schedule(db, conn)
