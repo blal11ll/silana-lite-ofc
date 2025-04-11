@@ -115,6 +115,7 @@ global.API = (name, path = '/', query = {}, apikeyqueryname) => (name in global.
         [apikeyqueryname]: global.APIKeys[name in global.APIs ? global.APIs[name] : name]
     } : {})
 })) : '')
+// global.Fn = function functionCallBack(fn, ...args) { return fn.call(global.conn, ...args) }
 global.timestamp = {
     start: new Date
 }
@@ -214,7 +215,7 @@ if (!conn.authState.creds.registered) {
         } else if (!!global.pairingNumber) {
             phoneNumber = global.pairingNumber.replace(/[^0-9]/g, '');
             if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
-                console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example: 212xxx")));
+                console.log(chalk.bgBlack(chalk.redBright("Start with your country's WhatsApp code, Example: 62xxx")));
                 process.exit(0);
             }
         } else if (!global.pairingNumber) {
@@ -311,8 +312,8 @@ global.reloadHandler = async function(restatConn) {
         conn.ev.off('connection.update', conn.connectionUpdate)
         conn.ev.off('creds.update', conn.credsUpdate)
     }
-    conn.welcome = 'مرحـــــــــبا\n\n @subject, @user\n'
-    conn.bye = '\n  مع السلامة  اتمنى ألا تعود الى هـــــــــنا \n@user 👋'
+    conn.welcome = 'مرحـــــــــبا بـــــــــك يا عـــــــــزيز(ت)ي ،انا ســـــــــعيدة بٱنضـــــــــمامك لهذه المجمـــــــــوعة رجاء إقرأ وصـــــــــف المجمـــــــــوعة لان فيها قـــــــــوانين استعمـــــــــال الـــــــــبوت ، صانعي نـــــــــورالدين يكره 🥺من لا يحترم القوانين و عندما ينزعج يبدأ في الطرد، لا تقلق 🤣🤣 ، مرة اخرى مرحبا \n\n @subject, @user\n'
+    conn.bye = '*الـــــــــباب أ الحـــــــــباب*\n  مع السلامة  اتمنى ألا تعود الى هـــــــــنا \n@user 👋'
     conn.spromote = '@user *يرقي* إلى المشرف '
     conn.sdemote = '@user *خفض الرتبة* من المشرف'
     conn.sDesc = 'تم تغيير الوصف إلى \n@desc'
